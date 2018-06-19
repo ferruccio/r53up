@@ -78,8 +78,13 @@ fn get_zone_id(r53client: &Route53Client, name: String) -> Result<Option<String>
             if let Some(config) = zone.config {
                 if let Some(private) = config.private_zone {
                     if !private {
-                        println!("zone: id={} name={}", zone.id, zone.name);
-                        return Ok(Some(zone.id));
+                        let prefix = "/hostedzone/";
+                        let zone_id = if zone.id.starts_with(prefix) {
+                            zone.id[prefix.len()..].to_owned()
+                        } else {
+                            zone.id.clone()
+                        };
+                        return Ok(Some(zone_id));
                     }
                 }
             }
