@@ -37,10 +37,7 @@ fn main() -> Result<()> {
                 .required(true))
             .get_matches();
 
-    let instanceid = metadata("instance-id")?;
     let ipv4 = metadata("public-ipv4")?;
-    println!("instanceid: {:?}", instanceid);
-    println!("ipv4: {:?}", ipv4);
 
     let host = app.value_of("host").unwrap_or("").to_owned();
     let domain = app.value_of("domain").unwrap_or("").to_owned();
@@ -122,6 +119,6 @@ fn update(
         hosted_zone_id: zone
     };
     let rsp = r53client.change_resource_record_sets(&req).sync()?;
-    println!("change: {:?}", rsp);
+    println!("update status: {}", rsp.change_info.status);
     Ok(())
 }
