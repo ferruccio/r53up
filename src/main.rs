@@ -48,7 +48,7 @@ fn main() -> Result<()> {
         domain.clone() + "."
     };
 
-    let r53client = Route53Client::simple(Region::UsEast1);
+    let r53client = Route53Client::simple(Region::default());
 
     match get_zone_id(&r53client, zone_domain)? {
         Some(zone) => update(&r53client, zone, dnsname, ipv4)?,
