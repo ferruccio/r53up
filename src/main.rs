@@ -44,13 +44,10 @@ fn main() -> Result<()> {
     let host = app.value_of("host").unwrap_or("").to_owned();
     let domain = app.value_of("domain").unwrap_or("").to_owned();
     let dnsname = format!("{}.{}", host, domain);
-    let zone_domain = if domain.ends_with(".") {
-        domain.clone()
-    } else {
-        domain.clone() + "."
-    };
     let private = app.is_present("private");
 
+    let zone_domain = domain.clone() +
+        if domain.ends_with(".") { "" } else { "." };
     let ipv4 = metadata(if private { "local-ipv4" } else { "public-ipv4" })?;
     let r53client = Route53Client::simple(Region::default());
 
@@ -71,7 +68,9 @@ fn metadata(name: &str) -> Result<String> {
     Ok(reqwest::get(&req)?.text()?)
 }
 
-fn get_zone_id(r53client: &Route53Client, name: String, private: bool) -> Result<Option<String>> {
+fn get_zone_id(r53client: &Route53Client,name: String, private: bool)
+    -> Result<Option<String>>
+{
     let req = ListHostedZonesByNameRequest {
         dns_name: Some(name.clone()),
         hosted_zone_id: None,
