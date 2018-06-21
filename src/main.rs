@@ -51,7 +51,11 @@ fn main() -> Result<()> {
     let r53client = Route53Client::simple(Region::UsEast1);
 
     match get_zone_id(&r53client, zone_domain)? {
-        Some(zone) => update(&r53client, zone, dnsname, ipv4)?,
+        Some(zone) => update(&r53client, UpdateOptions {
+            zone: zone,
+            dnsname: dnsname,
+            ipv4: ipv4
+        })?,
         None => println!("unknown hosted zone: {}", domain)
     }
 
@@ -90,23 +94,24 @@ fn get_zone_id(r53client: &Route53Client, name: String) -> Result<Option<String>
     Ok(None)
 }
 
-fn update(
-    r53client: &Route53Client,
+struct UpdateOptions {
     zone: String,
     dnsname: String,
-    ipv4: String) -> Result<()>
-{
+    ipv4: String
+}
+
+fn update(r53client: &Route53Client, options: UpdateOptions) -> Result<()> {
     let req = ChangeResourceRecordSetsRequest {
         change_batch: ChangeBatch {
             changes: vec![
                 Change {
                     action: "UPSERT".to_owned(),
                     resource_record_set: ResourceRecordSet {
-                        name: dnsname,
+                        name: options.dnsname,
                         type_: "A".to_owned(),
                         resource_records: Some(vec![
                             ResourceRecord {
-                                value: ipv4
+                                value: options.ipv4
                             }
                         ]),
                         ttl: Some(60),
@@ -116,7 +121,7 @@ fn update(
             ],
             comment: Some("r53up change".to_owned())
         },
-        hosted_zone_id: zone
+        hosted_zone_id: options.zone
     };
     let rsp = r53client.change_resource_record_sets(&req).sync()?;
     println!("update status: {}", rsp.change_info.status);
