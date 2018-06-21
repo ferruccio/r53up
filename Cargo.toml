@@ -2,6 +2,7 @@
 name = "r53up"
 version = "0.1.0"
 authors = ["Ferruccio Barletta <ferruccio.barletta@gmail.com>"]
+description = "Update Route 53 record for EC2 instance"
 
 [dependencies]
 quick-error = "1.2.2"

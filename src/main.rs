@@ -35,9 +35,11 @@ fn main() -> Result<()> {
                 .help("domain name")
                 .index(2)
                 .required(true))
+            .arg(Arg::with_name("private")
+                .help("Update a private zone")
+                .long("private")
+                .short("p"))
             .get_matches();
-
-    let ipv4 = metadata("public-ipv4")?;
 
     let host = app.value_of("host").unwrap_or("").to_owned();
     let domain = app.value_of("domain").unwrap_or("").to_owned();
@@ -47,10 +49,12 @@ fn main() -> Result<()> {
     } else {
         domain.clone() + "."
     };
+    let private = app.is_present("private");
 
+    let ipv4 = metadata(if private { "local-ipv4" } else { "public-ipv4" })?;
     let r53client = Route53Client::simple(Region::default());
 
-    match get_zone_id(&r53client, zone_domain)? {
+    match get_zone_id(&r53client, zone_domain, private)? {
         Some(zone) => update(&r53client, UpdateOptions {
             zone: zone,
             dnsname: dnsname,
@@ -67,7 +71,7 @@ fn metadata(name: &str) -> Result<String> {
     Ok(reqwest::get(&req)?.text()?)
 }
 
-fn get_zone_id(r53client: &Route53Client, name: String) -> Result<Option<String>> {
+fn get_zone_id(r53client: &Route53Client, name: String, private: bool) -> Result<Option<String>> {
     let req = ListHostedZonesByNameRequest {
         dns_name: Some(name.clone()),
         hosted_zone_id: None,
@@ -77,8 +81,8 @@ fn get_zone_id(r53client: &Route53Client, name: String) -> Result<Option<String>
     for zone in rsp.hosted_zones {
         if zone.name == name {
             if let Some(config) = zone.config {
-                if let Some(private) = config.private_zone {
-                    if !private {
+                if let Some(private_zone) = config.private_zone {
+                    if private_zone == private {
                         let prefix = "/hostedzone/";
                         let zone_id = if zone.id.starts_with(prefix) {
                             zone.id[prefix.len()..].to_owned()
