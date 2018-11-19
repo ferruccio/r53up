@@ -1,15 +1,9 @@
-use rusoto_core::{TlsError, CredentialsError};
+use rusoto_core::{CredentialsError};
 use rusoto_route53::{ChangeResourceRecordSetsError, ListHostedZonesByNameError};
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        TlsError(err: TlsError) {
-            from()
-            description(err.description())
-            display("tls error: {}", err)
-            cause(err)
-        }
         CredentialsError(err: CredentialsError) {
             from()
             description(err.description())

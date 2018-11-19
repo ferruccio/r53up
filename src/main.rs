@@ -49,7 +49,7 @@ fn main() -> Result<()> {
     let zone_domain = domain.clone() +
         if domain.ends_with(".") { "" } else { "." };
     let ipv4 = metadata(if private { "local-ipv4" } else { "public-ipv4" })?;
-    let r53client = Route53Client::simple(Region::default());
+    let r53client = Route53Client::new(Region::default());
 
     match get_zone_id(&r53client, zone_domain, private)? {
         Some(zone) => update(&r53client, UpdateOptions {
@@ -76,7 +76,7 @@ fn get_zone_id(r53client: &Route53Client,name: String, private: bool)
         hosted_zone_id: None,
         max_items: None
     };
-    let rsp = r53client.list_hosted_zones_by_name(&req).sync()?;
+    let rsp = r53client.list_hosted_zones_by_name(req).sync()?;
     for zone in rsp.hosted_zones {
         if zone.name == name {
             if let Some(config) = zone.config {
@@ -126,7 +126,7 @@ fn update(r53client: &Route53Client, options: UpdateOptions) -> Result<()> {
         },
         hosted_zone_id: options.zone
     };
-    let rsp = r53client.change_resource_record_sets(&req).sync()?;
+    let rsp = r53client.change_resource_record_sets(req).sync()?;
     println!("update status: {}", rsp.change_info.status);
     Ok(())
 }
